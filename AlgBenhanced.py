@@ -1,0 +1,960 @@
+############
+############ ALTHOUGH I GIVE YOU THIS TEMPLATE PROGRAM WITH THE NAME 'skeleton.py', 
+############ YOU CAN RENAME IT TO ANYTHING YOU LIKE. HOWEVER, FOR THE PURPOSES OF 
+############ THE EXPLANATION IN THESE COMMENTS, I ASSUME THAT THIS PROGRAM IS STILL 
+############ CALLED 'skeleton.py'.
+############
+############ IF YOU WISH TO IMPORT STANDARD MODULES, YOU CAN ADD THEM AFTER THOSE BELOW.
+############ NOTE THAT YOU ARE NOT ALLOWED TO IMPORT ANY NON-STANDARD MODULES! TO SEE
+############ THE STANDARD MODULES, TAKE A LOOK IN 'validate_before_handin.py'.
+############
+############ DO NOT INCLUDE ANY COMMENTS ON A LINE WHERE YOU IMPORT A MODULE.
+############
+
+import os
+import sys
+import time
+import random
+import math
+
+############ START OF SECTOR 1 (IGNORE THIS COMMENT)
+############
+############ NOW PLEASE SCROLL DOWN UNTIL THE NEXT BLOCK OF CAPITALIZED COMMENTS.
+############
+############ DO NOT TOUCH OR ALTER THE CODE IN BETWEEN! YOU HAVE BEEN WARNED!
+############ BY 'DO NOT TOUCH' I REALLY MEAN THIS. EVEN CHANGING THE SYNTAX, BY
+############ ADDING SPACES OR COMMENTS OR LINE RETURNS AND SO ON, COULD MEAN THAT
+############ CODES MIGHT NOT RUN WHEN I RUN THEM!
+############
+
+def read_file_into_string(input_file, ord_range):
+    the_file = open(input_file, 'r') 
+    current_char = the_file.read(1) 
+    file_string = ""
+    length = len(ord_range)
+    while current_char != "":
+        i = 0
+        while i < length:
+            if ord(current_char) >= ord_range[i][0] and ord(current_char) <= ord_range[i][1]:
+                file_string = file_string + current_char
+                i = length
+            else:
+                i = i + 1
+        current_char = the_file.read(1)
+    the_file.close()
+    return file_string
+
+def remove_all_spaces(the_string):
+    length = len(the_string)
+    new_string = ""
+    for i in range(length):
+        if the_string[i] != " ":
+            new_string = new_string + the_string[i]
+    return new_string
+
+def integerize(the_string):
+    length = len(the_string)
+    stripped_string = "0"
+    for i in range(0, length):
+        if ord(the_string[i]) >= 48 and ord(the_string[i]) <= 57:
+            stripped_string = stripped_string + the_string[i]
+    resulting_int = int(stripped_string)
+    return resulting_int
+
+def convert_to_list_of_int(the_string):
+    list_of_integers = []
+    location = 0
+    finished = False
+    while finished == False:
+        found_comma = the_string.find(',', location)
+        if found_comma == -1:
+            finished = True
+        else:
+            list_of_integers.append(integerize(the_string[location:found_comma]))
+            location = found_comma + 1
+            if the_string[location:location + 5] == "NOTE=":
+                finished = True
+    return list_of_integers
+
+def build_distance_matrix(num_cities, distances, city_format):
+    dist_matrix = []
+    i = 0
+    if city_format == "full":
+        for j in range(num_cities):
+            row = []
+            for k in range(0, num_cities):
+                row.append(distances[i])
+                i = i + 1
+            dist_matrix.append(row)
+    elif city_format == "upper_tri":
+        for j in range(0, num_cities):
+            row = []
+            for k in range(j):
+                row.append(0)
+            for k in range(num_cities - j):
+                row.append(distances[i])
+                i = i + 1
+            dist_matrix.append(row)
+    else:
+        for j in range(0, num_cities):
+            row = []
+            for k in range(j + 1):
+                row.append(0)
+            for k in range(0, num_cities - (j + 1)):
+                row.append(distances[i])
+                i = i + 1
+            dist_matrix.append(row)
+    if city_format == "upper_tri" or city_format == "strict_upper_tri":
+        for i in range(0, num_cities):
+            for j in range(0, num_cities):
+                if i > j:
+                    dist_matrix[i][j] = dist_matrix[j][i]
+    return dist_matrix
+
+def read_in_algorithm_codes_and_tariffs(alg_codes_file):
+    flag = "good"
+    code_dictionary = {}   
+    tariff_dictionary = {}  
+    if not os.path.exists(alg_codes_file):
+        flag = "not_exist"  
+        return code_dictionary, tariff_dictionary, flag
+    ord_range = [[32, 126]]
+    file_string = read_file_into_string(alg_codes_file, ord_range)  
+    location = 0
+    EOF = False
+    list_of_items = []  
+    while EOF == False: 
+        found_comma = file_string.find(",", location)
+        if found_comma == -1:
+            EOF = True
+            sandwich = file_string[location:]
+        else:
+            sandwich = file_string[location:found_comma]
+            location = found_comma + 1
+        list_of_items.append(sandwich)
+    third_length = int(len(list_of_items)/3)
+    for i in range(third_length):
+        code_dictionary[list_of_items[3 * i]] = list_of_items[3 * i + 1]
+        tariff_dictionary[list_of_items[3 * i]] = int(list_of_items[3 * i + 2])
+    return code_dictionary, tariff_dictionary, flag
+
+############
+############ HAVE YOU TOUCHED ANYTHING ABOVE? BECAUSE EVEN CHANGING ONE CHARACTER OR
+############ ADDING ONE SPACE OR LINE RETURN WILL MEAN THAT THE PROGRAM YOU HAND IN
+############ MIGHT NOT RUN PROPERLY!
+############
+############ THE RESERVED VARIABLE 'input_file' IS THE CITY FILE UNDER CONSIDERATION.
+############
+############ IT CAN BE SUPPLIED BY SETTING THE VARIABLE BELOW OR VIA A COMMAND-LINE
+############ EXECUTION OF THE FORM 'python skeleton.py city_file.txt'. WHEN SUPPLYING
+############ THE CITY FILE VIA A COMMAND-LINE EXECUTION, ANY ASSIGNMENT OF THE VARIABLE
+############ 'input_file' IN THE LINE BELOW iS SUPPRESSED.
+############
+############ IT IS ASSUMED THAT THIS PROGRAM 'skeleton.py' SITS IN A FOLDER THE NAME OF
+############ WHICH IS YOUR USER-NAME, E.G., 'abcd12', WHICH IN TURN SITS IN ANOTHER
+############ FOLDER. IN THIS OTHER FOLDER IS THE FOLDER 'city-files' AND NO MATTER HOW
+############ THE NAME OF THE CITY FILE IS SUPPLIED TO THIS PROGRAM, IT IS ASSUMED THAT 
+############ THE CITY FILE IS IN THE FOLDER 'city-files'.
+############
+############ END OF SECTOR 1 (IGNORE THIS COMMENT)
+
+input_file = "AISearchfile012.txt"
+
+############ START OF SECTOR 2 (IGNORE THIS COMMENT)
+############
+############ PLEASE SCROLL DOWN UNTIL THE NEXT BLOCK OF CAPITALIZED COMMENTS STARTING
+############ 'HAVE YOU TOUCHED ...'
+############
+############ DO NOT TOUCH OR ALTER THE CODE IN BETWEEN! YOU HAVE BEEN WARNED!
+############
+
+if len(sys.argv) > 1:
+    input_file = sys.argv[1]
+
+############ END OF SECTOR 2 (IGNORE THIS COMMENT)
+path_for_city_files = "../city-files"
+############ START OF SECTOR 3 (IGNORE THIS COMMENT)
+    
+if os.path.isfile(path_for_city_files + "/" + input_file):
+    ord_range = [[32, 126]]
+    file_string = read_file_into_string(path_for_city_files + "/" + input_file, ord_range)
+    file_string = remove_all_spaces(file_string)
+    print("I have found and read the input file " + input_file + ":")
+else:
+    print("*** error: The city file " + input_file + " does not exist in the city-file folder.")
+    sys.exit()
+
+location = file_string.find("SIZE=")
+if location == -1:
+    print("*** error: The city file " + input_file + " is incorrectly formatted.")
+    sys.exit()
+    
+comma = file_string.find(",", location)
+if comma == -1:
+    print("*** error: The city file " + input_file + " is incorrectly formatted.")
+    sys.exit()
+    
+num_cities_as_string = file_string[location + 5:comma]
+num_cities = integerize(num_cities_as_string)
+print("   the number of cities is stored in 'num_cities' and is " + str(num_cities))
+
+comma = comma + 1
+stripped_file_string = file_string[comma:]
+distances = convert_to_list_of_int(stripped_file_string)
+
+counted_distances = len(distances)
+if counted_distances == num_cities * num_cities:
+    city_format = "full"
+elif counted_distances == (num_cities * (num_cities + 1))/2:
+    city_format = "upper_tri"
+elif counted_distances == (num_cities * (num_cities - 1))/2:
+    city_format = "strict_upper_tri"
+else:
+    print("*** error: The city file " + input_file + " is incorrectly formatted.")
+    sys.exit()
+
+dist_matrix = build_distance_matrix(num_cities, distances, city_format)
+print("   the distance matrix 'dist_matrix' has been built.")
+
+############
+############ HAVE YOU TOUCHED ANYTHING ABOVE? BECAUSE EVEN CHANGING ONE CHARACTER OR
+############ ADDING ONE SPACE OR LINE RETURN WILL MEAN THAT THE PROGRAM YOU HAND IN
+############ MIGHT NOT RUN PROPERLY!
+############
+############ YOU NOW HAVE THE NUMBER OF CITIES STORED IN THE INTEGER VARIABLE 'num_cities'
+############ AND THE TWO_DIMENSIONAL MATRIX 'dist_matrix' HOLDS THE INTEGER CITY-TO-CITY 
+############ DISTANCES SO THAT 'dist_matrix[i][j]' IS THE DISTANCE FROM CITY 'i' TO CITY 'j'.
+############ BOTH 'num_cities' AND 'dist_matrix' ARE RESERVED VARIABLES AND SHOULD FEED
+############ INTO YOUR IMPLEMENTATIONS.
+############
+############ THERE NOW FOLLOWS CODE THAT READS THE ALGORITHM CODES AND TARIFFS FROM
+############ THE TEXT-FILE 'alg_codes_and_tariffs.txt' INTO THE RESERVED DICTIONARIES
+############ 'code_dictionary' AND 'tariff_dictionary'. DO NOT AMEND THIS CODE!
+############ THE TEXT FILE 'alg_codes_and_tariffs.txt' SHOULD BE IN THE SAME FOLDER AS
+############ THE FOLDER 'city-files' AND THE FOLDER WHOSE NAME IS YOUR USER-NAME.
+############
+############ PLEASE SCROLL DOWN UNTIL THE NEXT BLOCK OF CAPITALIZED COMMENTS STARTING
+############ 'HAVE YOU TOUCHED ...'
+############
+############ DO NOT TOUCH OR ALTER THE CODE IN BETWEEN! YOU HAVE BEEN WARNED!
+############
+############ END OF SECTOR 3 (IGNORE THIS COMMENT)
+
+############ START OF SECTOR 4 (IGNORE THIS COMMENT)
+path_for_alg_codes_and_tariffs = "../alg_codes_and_tariffs.txt"
+############ END OF SECTOR 4 (IGNORE THIS COMMENT)
+
+############ START OF SECTOR 5 (IGNORE THIS COMMENT)
+code_dictionary, tariff_dictionary, flag = read_in_algorithm_codes_and_tariffs(path_for_alg_codes_and_tariffs)
+
+if flag != "good":
+    print("*** error: The text file 'alg_codes_and_tariffs.txt' does not exist.")
+    sys.exit()
+
+print("The codes and tariffs have been read from 'alg_codes_and_tariffs.txt':")
+
+############
+############ HAVE YOU TOUCHED ANYTHING ABOVE? BECAUSE EVEN CHANGING ONE CHARACTER OR
+############ ADDING ONE SPACE OR LINE RETURN WILL MEAN THAT THE PROGRAM YOU HAND IN
+############ MIGHT NOT RUN PROPERLY! SORRY TO GO ON ABOUT THIS BUT YOU NEED TO BE 
+############ AWARE OF THIS FACT!
+############
+############ YOU NOW NEED TO SUPPLY SOME PARAMETERS.
+############
+############ THE RESERVED STRING VARIABLE 'my_user_name' SHOULD BE SET AT YOUR
+############ USER-NAME, E.G., "abcd12"
+############
+############ END OF SECTOR 5 (IGNORE THIS COMMENT)
+
+my_user_name = "pwtn63"
+
+############ START OF SECTOR 6 (IGNORE THIS COMMENT)
+############
+############ YOU CAN SUPPLY, IF YOU WANT, YOUR FULL NAME. THIS IS NOT USED AT ALL BUT SERVES AS
+############ AN EXTRA CHECK THAT THIS FILE BELONGS TO YOU. IF YOU DO NOT WANT TO SUPPLY YOUR
+############ NAME THEN EITHER SET THE STRING VARIABLES 'my_first_name' AND 'my_last_name' AT 
+############ SOMETHING LIKE "Mickey" AND "Mouse" OR AS THE EMPTY STRING (AS THEY ARE NOW;
+############ BUT PLEASE ENSURE THAT THE RESERVED VARIABLES 'my_first_name' AND 'my_last_name'
+############ ARE SET AT SOMETHING).
+############
+############ END OF SECTOR 6 (IGNORE THIS COMMENT)
+
+my_first_name = "Alec"
+my_last_name = "Durgheu"
+
+############ START OF SECTOR 7 (IGNORE THIS COMMENT)
+############
+############ YOU NEED TO SUPPLY THE ALGORITHM CODE IN THE RESERVED STRING VARIABLE 'algorithm_code'
+############ FOR THE ALGORITHM YOU ARE IMPLEMENTING. IT NEEDS TO BE A LEGAL CODE FROM THE TEXT-FILE
+############ 'alg_codes_and_tariffs.txt' (READ THIS FILE TO SEE THE CODES).
+############
+############ END OF SECTOR 7 (IGNORE THIS COMMENT)
+
+algorithm_code = "PS"
+
+############ START OF SECTOR 8 (IGNORE THIS COMMENT)
+############
+############ PLEASE SCROLL DOWN UNTIL THE NEXT BLOCK OF CAPITALIZED COMMENTS STARTING
+############ 'HAVE YOU TOUCHED ...'
+############
+############ DO NOT TOUCH OR ALTER THE CODE IN BETWEEN! YOU HAVE BEEN WARNED!
+############
+
+if not algorithm_code in code_dictionary:
+    print("*** error: the algorithm code " + algorithm_code + " is illegal")
+    sys.exit()
+print("   your algorithm code is legal and is " + algorithm_code + " -" + code_dictionary[algorithm_code] + ".")
+
+############
+############ HAVE YOU TOUCHED ANYTHING ABOVE? BECAUSE EVEN CHANGING ONE CHARACTER OR
+############ ADDING ONE SPACE OR LINE RETURN WILL MEAN THAT THE PROGRAM YOU HAND IN
+############ MIGHT NOT RUN PROPERLY! SORRY TO GO ON ABOUT THIS BUT YOU NEED TO BE 
+############ AWARE OF THIS FACT!
+############
+############ YOU CAN ADD A NOTE THAT WILL BE ADDED AT THE END OF THE RESULTING TOUR FILE IF YOU LIKE,
+############ E.G., "in my basic greedy search, I broke ties by always visiting the first 
+############ city found" BY USING THE RESERVED STRING VARIABLE 'added_note' OR LEAVE IT EMPTY
+############ IF YOU WISH. THIS HAS NO EFFECT ON MARKS BUT HELPS YOU TO REMEMBER THINGS ABOUT
+############ YOUR TOUR THAT YOU MIGHT BE INTERESTED IN LATER.
+############
+############ END OF SECTOR 8 (IGNORE THIS COMMENT)
+
+added_note = "If delta is not infinity and a particle has no neighbours within delta, the nearest neighbour is selected"
+
+############
+############ NOW YOUR CODE SHOULD BEGIN.
+############
+
+
+########################################################################################################################################
+
+# Given Variables
+# num_cities = The number of cities in the instance of TSP
+# dist_matrix = dist_matrix[i][j] gives the iinteger distance from city i to j, recall the graph is a clique of size V
+
+
+
+"""
+---------------------------------------- HYPERPARAMETERS ---------------------------------------------------------
+"""
+
+
+
+max_it = 99999999999999999999  # max iterations of search (arbitrary due to the killswitch)
+N = 10                         # number of particles
+delta = "inf"                  # the "radius" defining the size of a neighbourhood from a particle (note the "inf" keyword for infinity)
+alpha = 1.5                    # controls the weighting of the best previous position in calculation for its new velocity
+beta = 2.5                     # controls the weighting of the best neighbour position in calculation for its new velocity
+theta = 1                      # controls the weighting of the particles original velocity in calculation for its new velocity
+threshold_time = 55            # controls the duration of the search (in seconds)
+vel_size = 20                  # max size of the velocity vector (used in normalization)
+
+mutation_prob = 0.2            # probability of a mutation occuring
+confusion = 1                  # controls the weighting of particle deviation when particles get stuck
+
+
+
+"""
+---------------------------------------- GLOBAL VARIABLES ---------------------------------------------------------
+"""
+
+
+pt = [[]] * N                  # the positions of all particles at time t
+pt1 = [[]] * N                 # the positions of all particles at time t+1
+pbt = [[]] * N                 # the best positions historically of all particles at time t
+pbt_eval = [0] * N             # the tour lengths of the historically best positions of each particle
+vt = [[]] * N                  # the velocity of all particles at time t
+vt1 = [[]] * N                 # the velocity of all particles at time t+1
+best_tour = []                 # the best tour found thus far
+best_tour_length = 0           # the current best tour's length
+init_time = time.time()        # initialises the killswitch timer
+
+
+
+
+"""
+---------------------------------------- FUNCTIONS ---------------------------------------------------------
+"""
+
+
+
+
+""" 
+- This function creates a random tour using the shuffle method from random module
+- We now use this function for mutations 
+- Recall, we fix an arbitrary city to start on, here its 0, and then randomly assign the rest of the cities
+- Note that there are two representations of the same tour, the two directions of the cycle from city 0 
+"""
+def random_tour():
+    random_tour = list(range(1,num_cities))
+    random.shuffle(random_tour)
+    return [0]+random_tour
+
+
+
+
+
+
+"""
+This function creates a random velocity vector, used to initialise every particle's initial velocity
+Note that permutations will ignore the start city 0, since every tour representation should start with 0
+"""
+def random_vel():
+    rand_vel = []
+    for i in range(0, vel_size):
+        rand_vel.append([random.randint(1, num_cities-1),random.randint(1, num_cities-1)])
+    return rand_vel
+
+
+
+
+
+
+
+
+
+
+"""
+- This function computes the velocity vector between the two input tours given (a, b)
+- It first obtains rho, the permutations that map a to b
+- It then returns the set of pairs of swaps from rho as the velocity vector
+"""
+def compute_vel(a, b):
+
+    # First obtain rho
+    rho = []
+    options = list(range(1,num_cities))
+    while len(options) != 0:
+        perm = []
+        take = options[0]
+        perm.append(take)
+        options.remove(take)
+        new = b[a.index(take)]
+        while new in options:
+            perm.append(new)
+            options.remove(new)
+            new = b[a.index(new)]
+        rho.append(perm)
+
+    # Now Factorise rho
+    factors = []
+    for i in range(0, len(rho)):
+        size = len(rho[i])
+        if size > 1:
+            for j in range(0, size - 1):
+                factors.append([rho[i][j], rho[i][j+1]])
+    return factors
+
+
+
+
+
+
+
+
+
+
+
+"""
+- This function calculates the length of the tour represented by the position of a particle.
+- It simply reads the distances from the given variable dist_matrix and sums them, 
+    including the distance from the last city to city 0
+"""
+def evaluate_position(p):
+    length = 0
+    for i in range(0,num_cities-1):
+        length += dist_matrix[p[i]][p[i+1]]
+    return length + dist_matrix[p[-1]][0]
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+- This function initialises the positions and velocities to be used by the enhanced PSO algorithm
+- It also assigns the first case of the best tour found from these positions
+- In the enhanced PSO, the particles are initially positioned at the greedy tour or a reverse mutation of it
+    - greedy tour here means we repeatedly select the city with the lowest distance at each step
+    - reverse mutation (as in the genetic algorithm) refers to reversing an interior slice of a tour to create a 
+        variation of that tour
+"""
+def initialise(N):
+
+    # Changes made to the global variables
+    global pt
+    global pbt
+    global pbt_eval
+    global vt
+    global best_tour
+    global best_tour_length 
+
+    # First, create the greedy tour
+    greedy_tour = [0]
+    greedy_tour_length = 0
+    opt = list(range(1, num_cities))
+    while len(opt) != 0:
+        val = -1
+        key = -1
+        for i in range(0, len(dist_matrix[greedy_tour[-1]])):
+            if i in opt:
+                if (dist_matrix[greedy_tour[-1]][i] < val) or (val == -1):
+                    val = dist_matrix[greedy_tour[-1]][i]
+                    key = i
+        greedy_tour.append(key)
+        greedy_tour_length += val
+        opt.remove(key)
+    greedy_tour_length += dist_matrix[greedy_tour[-1]][0]
+
+    # Insert the greedy tour as the first particle
+    pt[0] = greedy_tour
+    pbt[0] = greedy_tour
+    pbt_eval[0] = greedy_tour_length
+    vt[0] = random_vel()
+
+    # Now create variation particles based off the greedy tour using reverse mutation (see enhanced Genetic Alg.)
+    track_best = greedy_tour
+    track_best_length = greedy_tour_length
+    for i in range(1, N):
+        start = random.randint(1, num_cities - 3)
+        end = random.randint(start+1, num_cities - 2)
+        nTour = greedy_tour[:start] + greedy_tour[end:start-1:-1] + greedy_tour[end+1:]
+        while nTour in pt:
+            start = random.randint(1, num_cities - 3)
+            end = random.randint(start+1, num_cities - 2)
+            nTour = greedy_tour[:start] + greedy_tour[end:start-1:-1] + greedy_tour[end+1:]
+        pt[i] = nTour
+        pbt[i] = nTour
+        pbt_eval[i] = evaluate_position(nTour)
+
+        # Keep track of the best tour found
+        if pbt_eval[i] < track_best_length:
+            track_best = pbt[i]
+            track_best_length = pbt_eval[i]
+
+        # Initialise velocity randomly
+        vt[i] = random_vel()
+
+    # Assign the best tour found so far globally
+    best_tour, best_tour_length = (track_best, track_best_length)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+- This function returns the position of the best neighbour with respect to delta of a given particle (obtained from its index "i" in pt)
+- Typically delta is infinity which means this code isn't used
+- Setting a delta value other than infinity will deploy this function and reduce performance significantly 
+
+IMPORTANT: - if delta is too small, there will be no neighbours which will break the given pseudocode in lectures 
+           - we select the closest neighbour to consider in these scenarios
+"""
+def best_neighbour(i, N, delta):
+
+    # Initialise Variables
+    bestNeigh = -1
+    bestNeigh_length = 0
+    closestNeigh = -1
+    closestNeigh_dist = 0
+
+    # Search for neighbours and closest particle
+    for j in range(0, N):
+        if j != i:
+            dist = len(compute_vel(pt[i], pt[j]))
+            if (closestNeigh == -1) or (dist < closestNeigh_dist):
+                closestNeigh = j
+                closestNeigh_dist = dist
+            if dist <= delta:
+                size = evaluate_position(pbt[j])
+                if (bestNeigh == -1) or (size < bestNeigh_length):
+                    bestNeigh = j
+                    bestNeigh_length = size
+    
+    # In the case where delta is too small, return the closest neighbour
+    if bestNeigh == -1:
+        return closestNeigh
+    
+    # Otherwise, return the delta neighbour with the best position
+    else:
+        return bestNeigh
+    
+
+
+
+
+
+
+
+
+        
+        
+
+
+"""
+- This function calculates the new position of a particle after adding a velocity to it
+- It is given a particle position and a velocity, and returns the new particle position
+"""
+def add_vel(p, v):
+    new = []
+    for i in range(0,len(p)):
+        new.append(p[i])
+    for i in range(0, len(v)):
+            c1_index = p.index(v[i][0])
+            c2_index = p.index(v[i][1])
+            temp = new[c1_index] 
+            new[c1_index] = new[c2_index] 
+            new[c2_index] = temp
+    return new
+
+
+
+
+
+
+
+
+
+
+"""
+- This function multiplies a given velocity by a real number gamma, and returns the output
+- If gamma < 1, we reduce the velocity, and if gamma >= 1, the velocity may be repeated
+"""
+def multiply_vel(v, gamma):
+    if gamma < 1:
+        return v[:math.floor(gamma * len(v))]
+    else:
+        new = []
+        for i in range(0, math.floor(gamma)):
+            for j in range(0,len(v)):
+                new.append(v[j])
+        return new + multiply_vel(v, gamma - math.floor(gamma))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+- This function calculates the new velocity of a particle according to the formula in the lecture slides
+- It takes the index of the particle, the best neighbour and the 3 constant hyperparameter as inputs
+- It returns the sum of the three key terms in the equation.
+"""
+def calculate_new_vel(i, nti, alpha, beta, theta):
+
+    # pbt - pt, 
+    # The velocity from the current position of the particle to its historically best position
+    pbt_pt = compute_vel(pt[i], pbt[i])
+
+    # nt - pt,
+    # The velocity from the current position of the particle to its best neighbour
+    nt_pt = compute_vel(pt[i], nti)
+
+    # theta * vt,
+    # The original velocity component, scaled by theta
+    theta_vt = multiply_vel(vt[i], theta)
+
+    # Generate epsilon randomly in the range 0.5 to 1, so they are closer to 1
+    eps1 = random.uniform(0.5, 1)
+    eps2 = random.uniform(0.5, 1)
+
+    # a * eps1 * (pbt - pt)
+    second_term = multiply_vel(pbt_pt, alpha * eps1)
+
+    # b * eps2 * (nt - pt)
+    third_term = multiply_vel(nt_pt, beta * eps2)
+
+    return theta_vt + second_term + third_term
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+"""
+- This function checks the timeout condition and is used to determine whether the program should be forcefully terminated
+- It checks the current time in relation to the init_time to see if the runtime has exceeded the duration desired
+"""
+def timeout():
+    val = time.time() - init_time
+    if val > threshold_time:
+        return (True, val)
+    return (False, val)
+
+
+
+
+
+
+
+
+
+
+
+"""
+- This function takes a given velocity and "normalizes" it
+- I decided to normalize by keeping all velocity vectors within a maximum length (vel_size)
+- If a vector is longer, I would pick components from it periodically, with some random offset
+- This ensures that each of the 3 key terms in the calculate_new_vel() function are still considered with their
+    appropriate weighting
+"""
+def normalize(v):
+    size = len(v)
+    if size > vel_size:
+        interval = size//(vel_size-1)
+        offset = random.randint(0, interval)
+        return v[offset::interval]
+    return v
+
+
+
+
+
+
+
+
+"""
+- This is the main function for the Particle Swarm Optimisation
+- It puts together all of the different component functions above to form the algorithm
+- It takes the basic hyperparameters as parameters, though this format is not necessary because this entire file is dedicated to PSO
+- It returns the best tour and its length found thus far
+"""
+def PSO(max_it, N, delta):
+
+    # Global Changes to variables
+    global pt
+    global pbt
+    global pbt_eval
+    global vt
+    global pt1
+    global vt1
+    global best_tour
+    global best_tour_length
+
+    # First, initialise the algorithm 
+    initialise(N)
+
+    # The main loop
+    t = 0
+    while t < max_it:
+        for i in range(0,N):
+            
+            # First, find the best historic position of the neighbours within delta from this particle 
+            # If delta is infinite, the particle can "view" the best position stored since it can "see" all of the 
+            # particles best historic positions
+            if delta == "inf":
+                nti = []
+                for j in best_tour:
+                    nti.append(j)
+            else:
+                nti = []
+                for j in pbt[best_neighbour(i, N, delta)]:
+                    nti.append(j)
+
+            # Find the new position of the particle by adding the velocity to it 
+            pt1[i] = add_vel(pt[i], vt[i])
+
+            # If the particle hasn't moved, we apply some enhancements
+            if pt1[i] == pt[i]:
+                
+                # Velocity vector redundant so recreate it 
+                # The value of confusion determines how much of an affect this will have
+                vt[i] = multiply_vel(random_vel(), confusion)
+
+                # Mutate it if its in the best position 
+                # It is likely that we are in a local optimum and should search elsewhere
+                if pt[i] == best_tour:
+                    if random.random() < mutation_prob:
+                        pt[i] = random_tour()
+                
+                # Redo the step
+                pt1[i] = add_vel(pt[i], vt[i])
+
+            # Calculate the new velocity of the particle at time t+1
+            vt1[i] = normalize(calculate_new_vel(i, nti, alpha, beta, theta))
+            
+            # Check if the new position is better than the historic position 
+            new = evaluate_position(pt1[i])
+            if new < pbt_eval[i]:
+                pbt[i] = [[]] * num_cities
+                for j in range(0,len(pt1[i])):
+                    pbt[i][j] = pt1[i][j]
+                pbt_eval[i] = evaluate_position(pt1[i])
+
+
+            # Check if the new position is better than our global record
+            if new < best_tour_length:
+                best_tour = []
+                for j in range(0,len(pt1[i])):
+                    best_tour.append(pt1[i][j])
+                best_tour_length = evaluate_position(pt1[i])
+                #print("New best overall: ", best_tour_length)
+        
+        # After doing so for each particle at time t...
+        # Swap the data around for computation in the next round
+        temp = pt1
+        pt = temp
+
+        temp2 = vt1
+        vt = temp2
+
+        pt1 = [[]] * N
+        vt1 = [[]] * N
+
+        # Check if a timeout event has occured
+        occ, val = timeout()
+        if occ:
+            break
+
+        # Increase the time counter
+        t += 1
+
+    # Return the best tour and best tour length found so far (can also access globally)
+    return (best_tour, best_tour_length) 
+
+
+
+
+
+"""
+------------------------------------------------ The Script ----------------------------------------------------
+"""
+
+
+
+"""
+Run the algorithm and assign the variables correctly
+"""
+PSO(max_it, N, delta)
+tour = best_tour
+tour_length = best_tour_length
+
+
+
+
+"""
+-------------------------------------------------------------------------------------------------------------------------
+"""
+
+
+
+
+
+
+
+############ START OF SECTOR 9 (IGNORE THIS COMMENT)
+############
+############ YOUR CODE SHOULD NOW BE COMPLETE AND WHEN EXECUTION OF THIS PROGRAM 'skeleton.py'
+############ REACHES THIS POINT, YOU SHOULD HAVE COMPUTED A TOUR IN THE RESERVED LIST VARIABLE 'tour', 
+############ WHICH HOLDS A LIST OF THE INTEGERS FROM {0, 1, ..., 'num_cities' - 1} SO THAT EVERY INTEGER
+############ APPEARS EXACTLY ONCE, AND YOU SHOULD ALSO HOLD THE LENGTH OF THIS TOUR IN THE RESERVED
+############ INTEGER VARIABLE 'tour_length'.
+############
+############ YOUR TOUR WILL BE PACKAGED IN A TOUR FILE OF THE APPROPRIATE FORMAT AND THIS TOUR FILE'S,
+############ NAME WILL BE A MIX OF THE NAME OF THE CITY FILE, THE NAME OF THIS PROGRAM AND THE
+############ CURRENT DATE AND TIME. SO, EVERY SUCCESSFUL EXECUTION GIVES A TOUR FILE WITH A UNIQUE
+############ NAME AND YOU CAN RENAME THE ONES YOU WANT TO KEEP LATER.
+############
+############ DO NOT TOUCH OR ALTER THE CODE BELOW THIS POINT! YOU HAVE BEEN WARNED!
+############
+
+flag = "good"
+length = len(tour)
+for i in range(0, length):
+    if isinstance(tour[i], int) == False:
+        flag = "bad"
+    else:
+        tour[i] = int(tour[i])
+if flag == "bad":
+    print("*** error: Your tour contains non-integer values.")
+    sys.exit()
+if isinstance(tour_length, int) == False:
+    print("*** error: The tour-length is a non-integer value.")
+    sys.exit()
+tour_length = int(tour_length)
+if len(tour) != num_cities:
+    print("*** error: The tour does not consist of " + str(num_cities) + " cities as there are, in fact, " + str(len(tour)) + ".")
+    sys.exit()
+flag = "good"
+for i in range(0, num_cities):
+    if not i in tour:
+        flag = "bad"
+if flag == "bad":
+    print("*** error: Your tour has illegal or repeated city names.")
+    sys.exit()
+check_tour_length = 0
+for i in range(0, num_cities - 1):
+    check_tour_length = check_tour_length + dist_matrix[tour[i]][tour[i + 1]]
+check_tour_length = check_tour_length + dist_matrix[tour[num_cities - 1]][tour[0]]
+if tour_length != check_tour_length:
+    flag = print("*** error: The length of your tour is not " + str(tour_length) + "; it is actually " + str(check_tour_length) + ".")
+    sys.exit()
+print("You, user " + my_user_name + ", have successfully built a tour of length " + str(tour_length) + "!")
+
+local_time = time.asctime(time.localtime(time.time()))
+output_file_time = local_time[4:7] + local_time[8:10] + local_time[11:13] + local_time[14:16] + local_time[17:19]
+output_file_time = output_file_time.replace(" ", "0")
+script_name = os.path.basename(sys.argv[0])
+if len(sys.argv) > 2:
+    output_file_time = sys.argv[2]
+output_file_name = script_name[0:len(script_name) - 3] + "_" + input_file[0:len(input_file) - 4] + "_" + output_file_time + ".txt"
+
+f = open(output_file_name,'w')
+f.write("USER = " + my_user_name + " (" + my_first_name + " " + my_last_name + "),\n")
+f.write("ALGORITHM CODE = " + algorithm_code + ", NAME OF CITY-FILE = " + input_file + ",\n")
+f.write("SIZE = " + str(num_cities) + ", TOUR LENGTH = " + str(tour_length) + ",\n")
+f.write(str(tour[0]))
+for i in range(1,num_cities):
+    f.write("," + str(tour[i]))
+f.write(",\nNOTE = " + added_note)
+f.close()
+print("I have successfully written your tour to the tour file:\n   " + output_file_name + ".")
+
+############ END OF SECTOR 9 (IGNORE THIS COMMENT)
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+    
+
+

@@ -1,0 +1,5 @@
+USER = pwtn63 (Alec Durgheu),
+ALGORITHM CODE = PS, NAME OF CITY-FILE = AISearchfile048.txt,
+SIZE = 48, TOUR LENGTH = 14135,
+0,33,20,10,35,39,17,42,32,11,38,36,24,4,23,22,25,14,31,30,29,44,40,46,21,15,19,41,8,27,16,28,6,45,1,47,9,5,2,43,3,13,26,18,12,7,34,37,
+NOTE = If delta is not infinity and a particle has no neighbours within delta, the nearest neighbour is selected
